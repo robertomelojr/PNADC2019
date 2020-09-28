@@ -1,3 +1,5 @@
+#O presente script foi utilizado para verificar se √© ou n√£o v√°lido utilizar a base da PNADC2019, pois √© preciso verificar se a mesma reflete a realidade das vari√°veis de interesse.
+
 #carregabdo biblioteca e abrindo base de dados#
 rm(list = ls())
 options( survey.lonely.psu = "adjust" )
@@ -7,11 +9,11 @@ library(survey)
 library(srvyr)
 library(tidyverse)
 #dados brutos da PNADC2019#
-pnadc_dat<-get_pnadc(2019, interview = 1, #informa ano e trmestre de interesse
-            vars = NULL,labels = F,              #informa quais e como ver as vari·veis
-            design = F                       #informa o objeto para an·lise (base de microdados ou objeto com desenho amostral) 
+pnadc_dat<-get_pnadc(2019, interview = 1, #informa ano e a entrevista de interesse
+            vars = NULL,labels = F,              #informa quais e como ver as vari√°veis
+            design = F                       #informa o objeto para an√°lise (base de microdados ou objeto com desenho amostral) 
             )
-                     ## PONDERA«√O ## 
+                     ## PONDERA√á√ÉO ## 
 # Adiciona coluna de 1's ao arquivo de microdados
 pnadc_dat$one <- 1
 # Conta o numero de pessoas da amostra
@@ -21,24 +23,24 @@ sum(pnadc_dat$one)
 pnadc_plano <-     
   svydesign(            
     ids = ~ UPA ,        # Declara a unidade amostral 
-    strata = ~ Estrato , # Declara a vari·vel que contÈm os estratos (As 2 primeiras posiÁıes representam o cÛdigo da Unidade da FederaÁ„o)
-    weights = ~ V1030 ,  # Declara vari·vel com pesos (projeÁ„o da populaÁ„o 1t-4t)
+    strata = ~ Estrato , # Declara a vari√°vel que cont√©m os estratos (As 2 primeiras posi√ß√µes representam o c√≥digo da Unidade da Federa√ß√£o)
+    weights = ~ V1030 ,  # Declara vari√°vel com pesos (proje√ß√£o da popula√ß√£o 1t-4t)
     data = pnadc_dat ,  # Declara base de microdados
-    nest = TRUE          # Declara que os estratos podem conter identificaÁıes identicas para UPA's distintas
+    nest = TRUE          # Declara que os estratos podem conter identifica√ß√µes identicas para UPA's distintas
   )
 
 summary(pnadc_plano)
-# Tabela com frequencias populacionais (estimativas IBGE para calibraÁ„o)
+# Tabela com frequencias populacionais (estimativas IBGE para calibra√ß√£o)
 df_pos <- data.frame( posest = unique( pnadc_dat$posest ), Freq = unique(pnadc_dat$V1030 ))
 df_pos
 # Calibrando pesos 
 pnadc_calib <- postStratify( pnadc_plano , ~ posest , df_pos )
-# ObtÈm fatores de calibraÁ„o dos pesos da amostra
+# Obt√©m fatores de calibra√ß√£o dos pesos da amostra
 pnadc_fatores = weights(pnadc_calib) / weights(pnadc_plano)
-boxplot(pnadc_fatores, horizontal = TRUE, xlab="Fatores de calibraÁ„o")
+boxplot(pnadc_fatores, horizontal = TRUE, xlab="Fatores de calibra√ß√£o")
 
-#Finalmente, o objeto pnadc_calib pode ser utilizado para construir estimativas a cerca da populaÁ„o brasileira. 
-#Uma forma de validar os procedimentos adotados atÈ aqui È comparar a estimativa populacional encontrada utilizando o objeto pnadc_calib com 
+#Finalmente, o objeto pnadc_calib pode ser utilizado para construir estimativas a cerca da popula√ß√£o brasileira. 
+#Uma forma de validar os procedimentos adotados at√© aqui √© comparar a estimativa populacional encontrada utilizando o objeto pnadc_calib com 
 #a estimativa divulgada pelo IBGE
 
                       # Valida estimativas populacionais
@@ -57,11 +59,11 @@ round(svymean( ~ V5001A2 , subset(pnadc_calib, V2009>=65 & V5001A %in% 1) , na.r
 # Salva objeto final
 saveRDS(pnadc_calib,"pnadc_calib_2019")
 
-# Limpa objetos da memÛria
+# Limpa objetos da mem√≥ria
 rm(pnadc_dat,pnadc_plano)
 
-                                      ##Estimando estatÌsticas de interesse## 
-# Limpando objetos da memÛria
+                                      ##Estimando estat√≠sticas de interesse## 
+# Limpando objetos da mem√≥ria
 rm(list = ls()) 
 # Carregando dados da PNADC 
 pnadc_calib <- readRDS(file="pnadc_calib_2019")
@@ -69,7 +71,7 @@ pnadc_calib <- readRDS(file="pnadc_calib_2019")
 # Modificando objeto para permitir sintaxe tipo tidyverse
 pnadc_calib <- as_survey_design(pnadc_calib)
 
-#Preparando as vari·veis para c·lculo de estimativas#
+#Preparando as vari√°veis para c√°lculo de estimativas#
 
 pnadc_calib <-  update(pnadc_calib, nivel_renda = factor( 1 + findInterval( VD4019 , seq( 5 , 60 , 5 ))),
                        sexo = as.numeric( V2007 == 1 ), idade65 = as.numeric(V2009>=65), analfabeto = 1*(V3001==2),
@@ -81,14 +83,14 @@ pnadc_calib <-  update(pnadc_calib, nivel_renda = factor( 1 + findInterval( VD40
                        rendadossembpcVD4019 = ifelse( V5001A %in% 2 & VD4015 %in% 1 , VD4019 , NA ) ,
                        # (rendimento efetivo do todos os trabalhos)#
                        rendadossembpcVD4020 = ifelse( V5001A %in% 2 & VD4015 %in% 1 , VD4020 , NA ) ,
-                       #indicador de nÌvel superior
+                       #indicador de n√≠vel superior
                        superior = 1*( VD3004 == 7)
                        )
 
 
                                 # Estimativas pontuais#
 
-#calculando estibativa do n˙mero total de BPC65 por sexo#
+#calculando estibativa do n√∫mero total de BPC65 por sexo#
 
 #totalBPC65<-svymean( ~ rendadossembpcVD4020 + rendadossembpcVD4019, 
                      # subset(pnadc_calib, V5001A %in% 2) ,
@@ -98,7 +100,7 @@ pnadc_calib <-  update(pnadc_calib, nivel_renda = factor( 1 + findInterval( VD40
 
 
 
-# Calcula estimativas do rendimento mÈdio nominal de todos os SEM BPC -
+# Calcula estimativas do rendimento m√©dio nominal de todos os SEM BPC -
 
 rendasemBPC<-svymean( ~ rendadossembpcVD4020 + rendadossembpcVD4019, 
                    subset(pnadc_calib, V5001A %in% 2) ,
@@ -146,7 +148,7 @@ Taxa_analfsemBPC <- svymean(~analfabeto,
                            na.rm = TRUE)
 round(100*coef(Taxa_analfsemBPC),2)
 round(100*SE(Taxa_analfsemBPC),2)
-# Calcula estimativa da Taxa de Analfabetismo dos indivÌduos da base#
+# Calcula estimativa da Taxa de Analfabetismo dos indiv√≠duos da base#
 Taxa_analf <- svymean(~analfabeto,
                       subset(pnadc_calib, V2009 >=0), 
                       na.rm = TRUE)
